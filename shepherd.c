@@ -11,7 +11,7 @@ struct sub_command {
   pid_t pid;
   int command_index;
   int killed, dead;
-} *sub_commands;
+} *sub_commands = NULL;
 
 int ncommands;
 char **commands;
@@ -31,6 +31,9 @@ pid_t spawn(char **command)
     /* parent */
     return pid;
   } else {
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigprocmask(SIG_SETMASK, &mask, NULL);
     /* child */
     if ( execvp(command[0], command) )
     {
@@ -47,7 +50,8 @@ void start()
 {
   int i, command_index = 0;
 
-  sub_commands = malloc(sizeof(*sub_commands) * ncommands);
+  if ( ! sub_commands )
+    sub_commands = malloc(sizeof(*sub_commands) * ncommands);
   if ( !sub_commands )
   {
     perror("malloc");
@@ -202,6 +206,7 @@ void help()
 int main(int argc, char **argv)
 {
   int daemonize = 0;
+  sigset_t new, old;
 
   if ( argc > 1 && strcmp(argv[1], "-d") == 0 )
   {
@@ -225,7 +230,10 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  sigfillset(&new);
+  sigprocmask(SIG_BLOCK, &new, &old);
   start();
+  sigprocmask(SIG_SETMASK, &old, NULL);
 
   /* wait for signals */
   while ( 1 )
