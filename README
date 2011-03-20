@@ -12,3 +12,9 @@ OPTIONS
 SIGNALS
 HUP		Restart all processes
 KILL, INT	Kill all processes and exit
+
+EXAMPLES
+Keeping an ssh tunnel alive (requires ssh-agent to make sense)
+	shepherd ssh -D 8080 somewhere
+Using more than one command
+	shephard something arg --- something_else arg1 arg2
