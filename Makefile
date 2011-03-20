@@ -4,7 +4,7 @@ shepherd: shepherd.c
 clean:
 	-rm shepherd
 
-install: watcher
+install: shepherd
 	cp shepherd /usr/bin/shepherd
 
 .PHONY: clean

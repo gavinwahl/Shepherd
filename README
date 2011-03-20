@@ -1,0 +1,14 @@
+Shepard is a program to watch long running commands that may quit
+unexpectedly. When this happens, it restarts them.
+
+USAGE
+shepherd [-d] [COMMAND [ARGUMENTS] ---]... COMMAND [ARGUMENTS]
+Runs each COMMAND with ARGUMENTS in the background, restarting them when they
+die for any reason.
+
+OPTIONS
+-d		Daemonize
+
+SIGNALS
+HUP		Restart all processes
+KILL, INT	Kill all processes and exit
