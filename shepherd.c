@@ -31,10 +31,10 @@ pid_t spawn(char **command)
     /* parent */
     return pid;
   } else {
+    /* child */
     sigset_t mask;
     sigemptyset(&mask);
     sigprocmask(SIG_SETMASK, &mask, NULL);
-    /* child */
     if ( execvp(command[0], command) )
     {
       perror("exec");
@@ -94,8 +94,8 @@ void sigchld_handler(int signum)
 {
   int status;
   pid_t pid;
-  pid = waitpid(-1, &status, 0);
-  restore(pid);
+  while ( (pid = waitpid(-1, &status, WNOHANG)) > 0 )
+    restore(pid);
 }
 
 
