@@ -78,7 +78,7 @@ void restore(pid_t pid)
   int i;
   for ( i = 0; i < ncommands; i++ )
   {
-    if ( sub_commands[i].pid == pid && ! sub_commands[i].killed)
+    if ( sub_commands[i].pid == pid )
     {
       if ( sub_commands[i].killed )
         sub_commands[i].dead = 1;
