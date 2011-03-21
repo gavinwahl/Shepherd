@@ -1,16 +1,17 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
-#include <signal.h>
 
 
 struct sub_command {
   pid_t pid;
   int command_index;
-  int killed, dead;
+  volatile int killed, dead;
 } *sub_commands = NULL;
 
 int ncommands;
@@ -102,6 +103,13 @@ void sigchld_handler(int signum)
 void kill_all_children(int signum)
 {
   int i;
+  int all_dead;
+  struct timespec req, rem;
+  sigset_t chld_blocked;
+
+  sigemptyset(&chld_blocked);
+  sigaddset(&chld_blocked, SIGCHLD);
+  sigprocmask(SIG_BLOCK, &chld_blocked, NULL);
   for ( i = 0; i < ncommands; i++ )
   {
     sub_commands[i].killed = 1;
@@ -115,12 +123,36 @@ void kill_all_children(int signum)
       kill(sub_commands[i].pid, SIGTERM);
     }
   }
-  sleep(1);
-  for ( i = 0; i < ncommands; i++ )
+  sigprocmask(SIG_UNBLOCK, &chld_blocked, NULL);
+
+  /* wait for up to 1 second or until all children are dead,
+   * whichever comes first */
+  rem.tv_sec = 1;
+  rem.tv_nsec = 0;
+  do {
+    all_dead = 1;
+    for ( i = 0; i < ncommands; i++ )
+    {
+      all_dead &= sub_commands[i].dead;
+    }
+    if ( all_dead )
+      break;
+    req = rem;
+  } while ( nanosleep(&req, &rem) == -1 );
+
+  if ( ! all_dead )
   {
-    if ( ! sub_commands[i].dead )
-      kill(sub_commands[i].pid, SIGKILL);
+    sigprocmask(SIG_BLOCK, &chld_blocked, NULL);
+    for ( i = 0; i < ncommands; i++ )
+    {
+      if ( ! sub_commands[i].dead )
+      {
+        kill(sub_commands[i].pid, SIGKILL);
+      }
+    }
+    sigprocmask(SIG_UNBLOCK, &chld_blocked, NULL);
   }
+
   if ( signum != 0 )
     exit(0);
 }
