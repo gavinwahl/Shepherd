@@ -212,7 +212,7 @@ void parse_commands(int argc, char **argv)
       commands[i] = strdup(argv[i]);
     }
   }
-  commands[i+1] = NULL;
+  commands[i] = NULL;
 }
 
 void help()
